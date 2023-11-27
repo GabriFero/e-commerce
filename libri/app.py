@@ -77,6 +77,13 @@ def update_book(isbn):
         for key, value in data.items():
             setattr(book, key, value)
         db_books.session.commit()
+        notification_data = {
+            "event": "book_updated",
+            "book_data": book.as_dict()
+        }
+
+        channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
+
         return jsonify(book.as_dict())
     return jsonify({'message': 'Book not found'}), 404
 
@@ -87,16 +94,15 @@ def delete_book(isbn):
     if book:
         db_books.session.delete(book)
         db_books.session.commit()
+        notification_data = {
+            "event": "book_deleted",
+            "book_data": book.as_dict()
+        }
+
+        channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
+
         return jsonify({'message': 'Book deleted'})
     return jsonify({'message': 'Book not found'}), 404
-
-@app.route('/books/<isbn>', methods=['GET'])
-def get_books_isbn(isbn):
-    book = Book.query.get(isbn)
-    if book is None:
-        return jsonify({'error': 'ISBN non trovato'}), 404
-    return jsonify(book.as_dict()), 200
-    
 
 @app.route('/book/<string:book_isbn>', methods=['GET'])
 def get_book_by_isbn(book_isbn):

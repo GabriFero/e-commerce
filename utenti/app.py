@@ -92,6 +92,13 @@ def update_user(user_id):
         for key, value in data.items():
             setattr(user, key, value)
         db.session.commit()
+        notification_data = {
+            "event": "usere updated",
+            "user_data": user.as_dict()
+        }
+
+        channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
+
         return jsonify(user.as_dict())
     return jsonify({'message': 'User not found'}), 404
 
@@ -102,6 +109,13 @@ def delete_user(user_id):
     if user:
         db.session.delete(user)
         db.session.commit()
+        notification_data = {
+            "event": "deleted user",
+            "user_data": user.as_dict()
+        }
+
+        channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
+
         return jsonify({'message': 'User deleted'})
     return jsonify({'message': 'User not found'}), 404
 

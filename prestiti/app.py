@@ -117,29 +117,58 @@ def create_prestito():
 
 @app.route('/prestiti/<int:id_prestito>', methods=['PUT'])
 def update_prestito(id_prestito):
-    data = request.get_json()
     prestito = Prestito.query.get(id_prestito)
     if not prestito:
         return jsonify({'error': 'Prestito non trovato'}), 404
-    if 'isbn' in data:
-        prestito.isbn = data['isbn']
-    if 'id' in data:
-        prestito.id = data['id']
-    if 'data_fine' in data:
-        prestito.data_fine = data['data_fine']
-    if 'stato' in data:
-        prestito.stato = data['stato']
+
+    data = request.get_json()
+    data_inizio_str = data.get('data_inizio')
+    data_fine_str = data.get('data_fine')
+    stato = data.get('stato', prestito.stato)
+
+    data_inizio = datetime.strptime(data_inizio_str, '%Y-%m-%d') if data_inizio_str else None
+    data_fine = datetime.strptime(data_fine_str, '%Y-%m-%d') if data_fine_str else None
+
+    # Invia una notifica alla coda delle notifiche prima di aggiornare il prestito
+    notification_data = {
+        "event": "prestito_updated",
+        "prestito_data": {
+            "id_prestito": prestito.id_prestito,
+            "isbn": prestito.isbn,
+            "id": prestito.id,
+            "data_inizio": prestito.data_inizio.strftime('%Y-%m-%d %H:%M:%S') if prestito.data_inizio else None,
+            "data_fine": prestito.data_fine.strftime('%Y-%m-%d %H:%M:%S') if prestito.data_fine else None,
+            "stato": prestito.stato
+        }
+    }
+    channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
+
+    prestito.data_inizio = data_inizio
+    prestito.data_fine = data_fine
+    prestito.stato = stato
+
     db.session.commit()
-    return jsonify(prestito.as_dict()), 200
+
+    return jsonify(prestito.as_dict())
 
 @app.route('/prestiti/<int:id_prestito>', methods=['DELETE'])
 def delete_prestito(id_prestito):
     prestito = Prestito.query.get(id_prestito)
     if not prestito:
         return jsonify({'error': 'Prestito non trovato'}), 404
+
+    # Invia una notifica alla coda delle notifiche prima di eliminare il prestito
+    notification_data = {
+        "event": "prestito_deleted",
+        "prestito_data": prestito.as_dict()
+    }
+    channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
+
+    # Elimina il prestito dal database
     db.session.delete(prestito)
     db.session.commit()
-    return '', 204
+
+    return jsonify({'message': 'Prestito eliminato con successo'})
 
     
 if __name__ == '__main__':
