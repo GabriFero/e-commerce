@@ -1,0 +1,112 @@
+version: "3.9"
+
+services:
+  flask_app:
+    container_name: flask_app
+    build: 
+     context: .
+     dockerfile: utenti/Dockerfile-app
+    environment:
+      - DB_URL_1=postgresql://postgres:postgres@flask_db:5432/Users
+    depends_on:
+      - flask_db
+    
+
+  flask_app2:
+    container_name: flask_app2
+    build: 
+     context: .
+     dockerfile: libri/Dockerfile-app2
+    environment:
+      - DB_URL_2=postgresql://postgres:postgres@flask_db2:5432/Books
+      - DB_URL_USERS=${DB_URL_1}
+      - DB_URL_BOOKS=${DB_URL_2}
+    depends_on:
+      - flask_db2
+    
+
+  flask_app3:
+    container_name: flask_app3
+    build: 
+     context: .
+     dockerfile: prestiti/Dockerfile-app3
+    environment:
+      - DB_URL_3=mysql+pymysql://mariadb:mariadb@mariadb:3306/prestiti
+    depends_on:
+      - mariadb
+      - flask_db
+      - flask_db2
+    
+
+  flask_db: 
+    container_name: flask_db
+    image: postgres:12
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=Users
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    
+
+  flask_db2:
+    container_name: flask_db2
+    image: postgres:12
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=Books
+    volumes:
+      - pgdata2:/var/lib/postgresql/data
+    
+
+  mariadb:
+    container_name: mariadb
+    image: mariadb:10.5
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 'mariadb'
+      MYSQL_DATABASE: 'prestiti'
+      MYSQL_USER: 'mariadb'
+      MYSQL_PASSWORD: 'mariadb'
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    
+
+  notifiche:
+    build: 
+      context: .
+      dockerfile: notifiche/Dockerfile-notifiche
+    depends_on:
+      - rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=user
+      - RABBITMQ_PASSWORD=password
+
+volumes:
+  pgdata:
+  pgdata2:
+  mariadb_data:
+  rabbitmq_data:
