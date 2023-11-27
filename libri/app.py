@@ -12,11 +12,16 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@flask_db
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db_books = SQLAlchemy(app)
 
-log_formatter = logging.Formatter('%(asctime)s %(levelname)s [%(filename)s:%(lineno)d] - %(message)s')
-log_handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
-log_handler.setLevel(logging.INFO)
-log_handler.setFormatter(log_formatter)
-app.logger.addHandler(log_handler)
+import sys
+
+handler = logging.StreamHandler(sys.stdout)
+
+handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
+
+
 
 class Book(db_books.Model):
     __tablename__ = 'books'
@@ -56,11 +61,12 @@ channel.queue_declare(queue='notifications')
 def get_books():
     try:
         books = Book.query.all()
-        app.logger.info('Endpoint /books accessed. Returning book data.')
+        logger.info('Books retrieved successfully')
         return jsonify([book.as_dict() for book in books])
     except Exception as e:
-        app.logger.error(f"Error in get_books: {str(e)}")
+        logger.error('Failed to retrieve books: %s', e)
         return jsonify({"error": "Internal Server Error"}), 500
+
 
 @app.route('/books', methods=['POST'])
 def add_book():

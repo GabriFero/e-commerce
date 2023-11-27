@@ -21,15 +21,25 @@ channel.queue_declare(queue='notifications')
 
 app = Flask(__name__)
 
-log_formatter = logging.Formatter('%(asctime)s %(levelname)s [%(filename)s:%(lineno)d] - %(message)s')
-log_handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
-log_handler.setLevel(logging.INFO)
-log_handler.setFormatter(log_formatter)
-app.logger.addHandler(log_handler)
-
 # Configurazione del nuovo database per gli utenti
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@flask_db:5432/Users'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Per disabilitare le notifiche di modifica
+
+import os
+
+log_directory = 'logs'
+log_file = f'{log_directory}/app.log'
+
+if not os.path.exists(log_directory):
+    os.makedirs(log_directory)
+
+# Configure logging
+log_file = 'logs/app.log'
+handler = RotatingFileHandler(log_file, maxBytes=1000000, backupCount=3)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
 
 db = SQLAlchemy(app)
 
@@ -64,10 +74,15 @@ db.create_all()
 def get_users():
     try:
         users = User.query.all()
-        return jsonify([user.as_dict() for user in users])
+        response_data = [user.as_dict() for user in users]
+        
+        app.logger.info('Successfully retrieved all users')
+        return jsonify(response_data)
     except Exception as e:
-        app.logger.error(f"Error in get_users: {str(e)}")
+        app.logger.error('Failed to retrieve users: %s', e)
         return jsonify({"error": "Internal Server Error"}), 500
+
+
 
 # Endpoint per ottenere un singolo utente tramite ID
 @app.route('/users/<int:user_id>', methods=['GET'])

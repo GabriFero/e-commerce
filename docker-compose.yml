@@ -10,6 +10,9 @@ services:
       - DB_URL_1=postgresql://postgres:postgres@flask_db:5432/Users
     depends_on:
       - flask_db
+    volumes:
+      - ./logs:/app/logs
+    
     
 
   flask_app2:
@@ -19,8 +22,6 @@ services:
      dockerfile: libri/Dockerfile-app2
     environment:
       - DB_URL_2=postgresql://postgres:postgres@flask_db2:5432/Books
-      - DB_URL_USERS=${DB_URL_1}
-      - DB_URL_BOOKS=${DB_URL_2}
     depends_on:
       - flask_db2
     
@@ -110,3 +111,5 @@ volumes:
   pgdata2:
   mariadb_data:
   rabbitmq_data:
+
+  
