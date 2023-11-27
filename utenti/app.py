@@ -5,6 +5,8 @@ import psycopg2
 import pika
 import json
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 
 rabbitmq_host = os.environ.get('RABBITMQ_HOST', 'rabbitmq')
 rabbitmq_port = int(os.environ.get('RABBITMQ_PORT', 5672))
@@ -18,6 +20,12 @@ channel = connection.channel()
 channel.queue_declare(queue='notifications')
 
 app = Flask(__name__)
+
+log_formatter = logging.Formatter('%(asctime)s %(levelname)s [%(filename)s:%(lineno)d] - %(message)s')
+log_handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
+log_handler.setLevel(logging.INFO)
+log_handler.setFormatter(log_formatter)
+app.logger.addHandler(log_handler)
 
 # Configurazione del nuovo database per gli utenti
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@flask_db:5432/Users'
@@ -54,8 +62,12 @@ db.create_all()
 # Endpoint per ottenere tutti gli utenti
 @app.route('/users', methods=['GET'])
 def get_users():
-    users = User.query.all()
-    return jsonify([user.as_dict() for user in users])
+    try:
+        users = User.query.all()
+        return jsonify([user.as_dict() for user in users])
+    except Exception as e:
+        app.logger.error(f"Error in get_users: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
 
 # Endpoint per ottenere un singolo utente tramite ID
 @app.route('/users/<int:user_id>', methods=['GET'])

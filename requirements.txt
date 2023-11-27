@@ -5,3 +5,5 @@ Flask-Migrate
 PyMySQL
 requests
 pika
+pytest
+pytest-cov

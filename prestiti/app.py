@@ -7,6 +7,8 @@ from urllib3.connection import HTTPConnection
 from datetime import datetime
 import os
 import json
+import logging
+from logging.handlers import RotatingFileHandler
 
 rabbitmq_host = os.environ.get('RABBITMQ_HOST', 'rabbitmq')
 rabbitmq_port = int(os.environ.get('RABBITMQ_PORT', 5672))
@@ -20,6 +22,12 @@ channel.queue_declare(queue='notifications')
 
 
 app = Flask(__name__)
+
+log_formatter = logging.Formatter('%(asctime)s %(levelname)s [%(filename)s:%(lineno)d] - %(message)s')
+log_handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
+log_handler.setLevel(logging.INFO)
+log_handler.setFormatter(log_formatter)
+app.logger.addHandler(log_handler)
 
 # Configurazione del database dei Prestiti (MariaDB)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://mariadb:mariadb@mariadb:3306/prestiti'
@@ -57,6 +65,17 @@ class Prestito(db.Model):
 
 db.create_all()
 
+# Endpoint per ottenere tutti i prestiti
+@app.route('/prestiti', methods=['GET'])
+def get_prestiti():
+    try:
+        prestiti = Prestito.query.all()
+        app.logger.info('Returning data for all prestiti.')
+        return jsonify([prestito.as_dict() for prestito in prestiti]), 200
+    except Exception as e:
+        app.logger.error(f"Error in get_prestiti: {str(e)}")
+        return jsonify({"error": "Internal Server Error"}), 500
+
 @app.route('/prestiti/<int:id_prestito>', methods=['GET'])
 def get_prestito(id_prestito):
     prestito = Prestito.query.get(id_prestito)
@@ -64,8 +83,7 @@ def get_prestito(id_prestito):
         return jsonify({'error': 'Prestito non trovato'}), 404
     return jsonify(prestito.as_dict()), 200
 
-from flask import request, jsonify
-import requests
+
 
 @app.route('/prestiti', methods=['POST'])
 def create_prestito():
