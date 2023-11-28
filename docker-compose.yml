@@ -5,7 +5,7 @@ services:
     container_name: flask_app
     build: 
      context: .
-     dockerfile: utenti/Dockerfile-app
+     dockerfile: utenti/Dockerfile
     environment:
       - DB_URL_1=postgresql://postgres:postgres@flask_db:5432/Users
     depends_on:
@@ -19,7 +19,7 @@ services:
     container_name: flask_app2
     build: 
      context: .
-     dockerfile: libri/Dockerfile-app2
+     dockerfile: libri/Dockerfile
     environment:
       - DB_URL_2=postgresql://postgres:postgres@flask_db2:5432/Books
     depends_on:
@@ -30,7 +30,7 @@ services:
     container_name: flask_app3
     build: 
      context: .
-     dockerfile: prestiti/Dockerfile-app3
+     dockerfile: prestiti/Dockerfile
     environment:
       - DB_URL_3=mysql+pymysql://mariadb:mariadb@mariadb:3306/prestiti
     depends_on:
@@ -95,7 +95,7 @@ services:
   notifiche:
     build: 
       context: .
-      dockerfile: notifiche/Dockerfile-notifiche
+      dockerfile: notifiche/Dockerfile
     depends_on:
       - rabbitmq
     volumes:
