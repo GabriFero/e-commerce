@@ -48,9 +48,9 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/image3:latest
 
       - name: Build and push Image 4
-        uses: utenti/build-push-action@v5
+        uses: docker/build-push-action@v5
         with:
           context: .
-          file: /Dockerfile
+          file: utenti/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/image4:latest
