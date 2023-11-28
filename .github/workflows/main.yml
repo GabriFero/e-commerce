@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: /Dockerfile
+          file: libri/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/image1:latest
 
@@ -35,7 +35,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: /Dockerfile
+          file: notifiche/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/image2:latest
 
@@ -43,12 +43,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: /Dockerfile
+          file: prestiti/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/image3:latest
 
       - name: Build and push Image 4
-        uses: docker/build-push-action@v5
+        uses: utenti/build-push-action@v5
         with:
           context: .
           file: /Dockerfile
