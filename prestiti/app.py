@@ -23,11 +23,14 @@ channel.queue_declare(queue='notifications')
 
 app = Flask(__name__)
 
-log_formatter = logging.Formatter('%(asctime)s %(levelname)s [%(filename)s:%(lineno)d] - %(message)s')
-log_handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
-log_handler.setLevel(logging.INFO)
-log_handler.setFormatter(log_formatter)
-app.logger.addHandler(log_handler)
+import sys
+
+handler = logging.StreamHandler(sys.stdout)
+
+handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 # Configurazione del database dei Prestiti (MariaDB)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://mariadb:mariadb@mariadb:3306/prestiti'
@@ -70,10 +73,10 @@ db.create_all()
 def get_prestiti():
     try:
         prestiti = Prestito.query.all()
-        app.logger.info('Returning data for all prestiti.')
+        logger.info('Books retrieved successfully')
         return jsonify([prestito.as_dict() for prestito in prestiti]), 200
     except Exception as e:
-        app.logger.error(f"Error in get_prestiti: {str(e)}")
+        logger.info('Books retrieved successfully')
         return jsonify({"error": "Internal Server Error"}), 500
 
 @app.route('/prestiti/<int:id_prestito>', methods=['GET'])

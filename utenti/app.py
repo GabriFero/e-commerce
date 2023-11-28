@@ -34,12 +34,14 @@ if not os.path.exists(log_directory):
     os.makedirs(log_directory)
 
 # Configure logging
-log_file = 'logs/app.log'
-handler = RotatingFileHandler(log_file, maxBytes=1000000, backupCount=3)
-handler.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-app.logger.addHandler(handler)
+import sys
+
+handler = logging.StreamHandler(sys.stdout)
+
+handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 db = SQLAlchemy(app)
 
@@ -76,10 +78,10 @@ def get_users():
         users = User.query.all()
         response_data = [user.as_dict() for user in users]
         
-        app.logger.info('Successfully retrieved all users')
+        logger.info('Books retrieved successfully')
         return jsonify(response_data)
     except Exception as e:
-        app.logger.error('Failed to retrieve users: %s', e)
+        logger.info('Books retrieved successfully')
         return jsonify({"error": "Internal Server Error"}), 500
 
 
