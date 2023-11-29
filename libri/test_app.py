@@ -45,15 +45,15 @@ def test_update_book(client):
     assert response.status_code == 200
     assert response.json is not None
 
-def test_delete_book(client):
-    # Test DELETE /books/<isbn>
-    response = client.delete('/books/1234567890123')
-    assert response.status_code == 200
-    assert response.json is not None
-
 def test_get_book_by_isbn(client):
     # Test GET /book/<isbn>
     response = client.get('/book/1234567890123')
+    assert response.status_code == 200
+    assert response.json is not None
+
+def test_delete_book(client):
+    # Test DELETE /books/<isbn>
+    response = client.delete('/books/1234567890123')
     assert response.status_code == 200
     assert response.json is not None
 

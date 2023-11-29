@@ -73,17 +73,19 @@ db.create_all()
 def get_prestiti():
     try:
         prestiti = Prestito.query.all()
-        logger.info('Books retrieved successfully')
+        logger.info('Prestito ottenuto correttamente')
         return jsonify([prestito.as_dict() for prestito in prestiti]), 200
     except Exception as e:
-        logger.info('Books retrieved successfully')
+        logger.info('Errore 500')
         return jsonify({"error": "Internal Server Error"}), 500
 
 @app.route('/prestiti/<int:id_prestito>', methods=['GET'])
 def get_prestito(id_prestito):
     prestito = Prestito.query.get(id_prestito)
     if not prestito:
+        logger.info('Prestito non trovato')
         return jsonify({'error': 'Prestito non trovato'}), 404
+    logger.info('Prestito ottenuto correttamente')
     return jsonify(prestito.as_dict()), 200
 
 
@@ -132,7 +134,7 @@ def create_prestito():
     }
 
     channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
-
+    logger.info('Prestito aggiunto correttamente')
     return jsonify(prestito.as_dict()), 201
 
 
@@ -169,7 +171,7 @@ def update_prestito(id_prestito):
     prestito.stato = stato
 
     db.session.commit()
-
+    logger.info('Prestito modificato correttamente')
     return jsonify(prestito.as_dict())
 
 @app.route('/prestiti/<int:id_prestito>', methods=['DELETE'])
@@ -188,7 +190,7 @@ def delete_prestito(id_prestito):
     # Elimina il prestito dal database
     db.session.delete(prestito)
     db.session.commit()
-
+    logger.info('Prestito eliminato correttamente')
     return jsonify({'message': 'Prestito eliminato con successo'})
 
     

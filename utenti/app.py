@@ -78,10 +78,10 @@ def get_users():
         users = User.query.all()
         response_data = [user.as_dict() for user in users]
         
-        logger.info('Books retrieved successfully')
+        logger.info('Utente/i ottenuti correttamente')
         return jsonify(response_data)
     except Exception as e:
-        logger.info('Books retrieved successfully')
+        logger.info('Errore 500')
         return jsonify({"error": "Internal Server Error"}), 500
 
 
@@ -91,7 +91,9 @@ def get_users():
 def get_user(user_id):
     user = User.query.get(user_id)
     if user:
+        logger.info('Utente ottenuto correttamente')
         return jsonify(user.as_dict())
+    logger.info('Errore nell ottenimento dell utente')
     return jsonify({'message': 'User not found'}), 404
 
 # Endpoint per aggiungere un nuovo utente
@@ -109,7 +111,7 @@ def add_user():
         }
 
     channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
-
+    logger.info('Libro aggiunto correttamente')
     return jsonify(new_user.as_dict()), 201
 
 # Endpoint per aggiornare un utente tramite ID
@@ -127,8 +129,9 @@ def update_user(user_id):
         }
 
         channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
-
+        logger.info('Utente modificato correttamente')
         return jsonify(user.as_dict())
+    logger.info('Errore nella modifica dell utente')
     return jsonify({'message': 'User not found'}), 404
 
 # Endpoint per eliminare un utente tramite ID
@@ -144,8 +147,9 @@ def delete_user(user_id):
         }
 
         channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
-
+        logger.info('Utente eliminato correttamente')
         return jsonify({'message': 'User deleted'})
+    logger.info('Utente non trovato')
     return jsonify({'message': 'User not found'}), 404
 
 @app.route('/user/<int:user_id>', methods=['GET'])

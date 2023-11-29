@@ -61,10 +61,10 @@ channel.queue_declare(queue='notifications')
 def get_books():
     try:
         books = Book.query.all()
-        logger.info('Books retrieved successfully')
+        logger.info('Libro ottenuto correttamente')
         return jsonify([book.as_dict() for book in books])
     except Exception as e:
-        logger.error('Failed to retrieve books: %s', e)
+        logger.error('Errore 500')
         return jsonify({"error": "Internal Server Error"}), 500
 
 
@@ -82,10 +82,11 @@ def add_book():
         }
 
         channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
-
+        logger.info('Libro ottenuto correttamente')
         return jsonify(new_book.as_dict()), 201
     except Exception as e:
         db_books.session.rollback()
+        logger.info('Errore 500')
         return jsonify({"error": str(e)}), 500
 
 # Endpoint per aggiornare un libro tramite ISBN
@@ -103,8 +104,9 @@ def update_book(isbn):
         }
 
         channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
-
+        logger.info('Libro modificato correttamente')
         return jsonify(book.as_dict())
+    logger.info('Libro non trovato')
     return jsonify({'message': 'Book not found'}), 404
 
 # Endpoint per eliminare un libro tramite ISBN
@@ -120,8 +122,9 @@ def delete_book(isbn):
         }
 
         channel.basic_publish(exchange='', routing_key='notifications', body=json.dumps(notification_data))
-
+        logger.info('Libro eliminato correttamente')
         return jsonify({'message': 'Book deleted'})
+    logger.info('Libro non trovato')
     return jsonify({'message': 'Book not found'}), 404
 
 @app.route('/book/<string:book_isbn>', methods=['GET'])
